@@ -1,0 +1,7 @@
+blish_module,current_use,importance,nexus_candidate,migration_status,notes
+Pathing,"routes, markers, achievements",high,TaimiHUD,testing,"Check marker pack compatibility and missing prompts"
+Event Table,"meta/world boss timers",medium,"World Bosses / Event Timers",planned,"Avoid duplicate timers during coexistence"
+Mouse Cursor,"cursor visibility",medium,"Combat Cursor / Custom Cursors / CursorAnchor",planned,"Compare visibility and keybind behavior"
+ArcDPS Integration,"combat data",high,"ArcDPS via Nexus",planned,"Move or reinstall ArcDPS through Nexus"
+Decor,"homestead/guild hall decoration preview",low,"Item Detail Popups or keep Blish",keep_blish,"No assumed full replacement"
+API/account modules,"account/achievement/inventory info",medium,"case-by-case",review,"Check API permissions and equivalent addon"

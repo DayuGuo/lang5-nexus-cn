@@ -1,0 +1,12 @@
+build/
+build-*/
+build-mingw*/
+out/
+.DS_Store
+*.user
+*.suo
+*.vcxproj*
+*.dll
+*.pdb
+*.exp
+*.lib
