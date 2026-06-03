@@ -195,6 +195,18 @@ bool BuildRel32Jump(uint8_t* source, uint8_t* target, std::array<uint8_t, 5>* ou
     return true;
 }
 
+bool AppendRel32Jump(CodeBuffer& code, uint8_t* codeBase, uint8_t* target) {
+    uint8_t* source = codeBase + code.Size;
+    intptr_t delta = target - (source + 5);
+    if (delta < INT32_MIN || delta > INT32_MAX) {
+        return false;
+    }
+
+    AppendU8(code, 0xE9);
+    AppendU32(code, static_cast<uint32_t>(static_cast<int32_t>(delta)));
+    return true;
+}
+
 void* AllocNearMemory(uint8_t* target, size_t size) {
     SYSTEM_INFO sysInfo{};
     GetSystemInfo(&sysInfo);
@@ -397,6 +409,12 @@ uint8_t* FindAsciiLiteral(uint8_t* base, size_t size, const char* text) {
         false);
 }
 
+bool IsRel32CallOperand(uint8_t* displacementAddress) {
+    return displacementAddress &&
+        IsReadableAddress(displacementAddress - 1, 5) &&
+        displacementAddress[-1] == 0xE8;
+}
+
 uint8_t* FollowRel32(uint8_t* displacementAddress) {
     if (!IsReadableAddress(displacementAddress, sizeof(int32_t))) {
         return nullptr;
@@ -496,6 +514,11 @@ bool ResolveLanguageSetter() {
         return false;
     }
 
+    if (!IsRel32CallOperand(setterTargetAddress)) {
+        Log(LOGL_WARNING, "Derived language setter displacement is not a call rel32 operand. GW2 layout may have changed.");
+        return false;
+    }
+
     uint8_t* originLangPtr = FollowRel32(originLangPtrAddress);
     uint8_t* setterTarget = FollowRel32(setterTargetAddress);
 
@@ -571,6 +594,11 @@ void ResolveCallerHookDiagnostics() {
 
     if (hookPoint[0] != 0xE8) {
         Log(LOGL_WARNING, "ViewAdvanceText hook point does not start with a call instruction.");
+        return;
+    }
+
+    if (hookPoint + 5 != ref - 3 || ref[-3] != 0x48 || ref[-2] != 0x8D || ref[-1] != 0x0D) {
+        Log(LOGL_WARNING, "ViewAdvanceText hook point no longer matches expected call + lea layout.");
         return;
     }
 
@@ -670,8 +698,12 @@ bool InstallDeferredCallerHook() {
 
     AppendU8(code, 0x48); AppendU8(code, 0xB8); AppendU64(code, reinterpret_cast<uint64_t>(g_viewAdvanceTextOriginalCallTarget)); // mov rax, imm64
     AppendU8(code, 0xFF); AppendU8(code, 0xD0); // call rax
-    AppendU8(code, 0x48); AppendU8(code, 0xB8); AppendU64(code, reinterpret_cast<uint64_t>(jumpBack)); // mov rax, imm64
-    AppendU8(code, 0xFF); AppendU8(code, 0xE0); // jmp rax
+    if (!AppendRel32Jump(code, static_cast<uint8_t*>(g_callerCodeCave), jumpBack)) {
+        Log(LOGL_CRITICAL, "Deferred caller return jump is outside rel32 range.");
+        VirtualFree(g_callerCodeCave, 0, MEM_RELEASE);
+        g_callerCodeCave = nullptr;
+        return false;
+    }
 
     std::memcpy(g_callerCodeCave, code.Bytes.data(), code.Size);
     FlushInstructionCache(GetCurrentProcess(), g_callerCodeCave, code.Size);
@@ -740,8 +772,10 @@ bool WriteLanguageValue(uint32_t languageId) {
 bool SetLanguage(uint32_t languageId) {
 #if LANG5_ENABLE_DEFERRED_CALLER_HOOK
     if (!g_callerHookInstalled) {
-        Log(LOGL_WARNING, "Deferred caller hook is not installed.");
-        return false;
+        if (!InstallDeferredCallerHook()) {
+            Alert("Lang5 Nexus CN: deferred caller hook failed; toggle cancelled.");
+            return false;
+        }
     }
 
     g_pendingCall.Arg0 = languageId;
@@ -847,13 +881,6 @@ void AddonLoad(AddonAPI_t* api) {
     }
     ResolveCallerHookDiagnostics();
 
-#if LANG5_ENABLE_DEFERRED_CALLER_HOOK
-    if (!InstallDeferredCallerHook()) {
-        Alert("Lang5 Nexus CN: deferred caller hook failed.");
-        return;
-    }
-#endif
-
 #if LANG5_ENABLE_UNSAFE_LANGUAGE_CALL
     if (g_api->GUI_Register) {
         g_api->GUI_Register(RT_PostRender, OnPostRender);
@@ -877,14 +904,20 @@ void AddonUnload() {
     }
 #endif
 
-#if LANG5_ENABLE_DEFERRED_CALLER_HOOK
-    UninstallDeferredCallerHook();
-#endif
-
 #if LANG5_ENABLE_UNSAFE_LANGUAGE_CALL
+#if LANG5_ENABLE_DEFERRED_CALLER_HOOK
+    if (g_loaded && g_chineseEnabled) {
+        Log(LOGL_WARNING, "Skipping deferred language restore during unload; deferred calls cannot complete after hook removal.");
+    }
+#else
     if (g_loaded && g_chineseEnabled) {
         SetLanguage(g_originalLanguage);
     }
+#endif
+#endif
+
+#if LANG5_ENABLE_DEFERRED_CALLER_HOOK
+    UninstallDeferredCallerHook();
 #endif
 
     g_loaded = false;
