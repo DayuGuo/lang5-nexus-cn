@@ -1,3 +1,5 @@
+> 老版本也支持2026年7月15日的更新，新版本增加了开启游戏自动启动中文。
+
 # Nexus Chinese
 
 这是一个实验性的 Guild Wars 2 Nexus 插件项目，目标是把 [cy-sp-howard/lang5](https://github.com/cy-sp-howard/lang5) 中的中文 UI 切换思路移植到 Nexus 插件环境。

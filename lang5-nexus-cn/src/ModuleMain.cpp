@@ -1,4 +1,5 @@
 #include "Nexus.h"
+#include "imgui.h"
 
 #include <Psapi.h>
 #include <Windows.h>
@@ -6,6 +7,7 @@
 #include <cstdio>
 #include <array>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 
 #ifndef LANG5_ENABLE_UNSAFE_LANGUAGE_CALL
@@ -30,7 +32,14 @@ constexpr const char* kChannel = "Lang5NexusCn";
 constexpr const char* kToggleKeybind = "KB_LANG5_NEXUS_CN_TOGGLE";
 constexpr const char* kValidateLanguageAnchor = "ValidateLanguage(language)";
 constexpr const char* kViewAdvanceTextAnchor = "ViewAdvanceText";
+constexpr const char* kAddonDirName = "Lang5NexusCn";
+constexpr const char* kSettingsFileName = "settings.txt";
+constexpr const char* kAutoEnableKey = "auto_enable_chinese";
 constexpr uint32_t kChineseLanguageId = 5;
+
+// Number of PostRender frames to wait after load before auto-applying Chinese,
+// so the game and the deferred caller path are fully live first.
+constexpr int kAutoApplyDelayFrames = 120;
 
 AddonAPI_t* g_api = nullptr;
 bool g_loaded = false;
@@ -38,8 +47,14 @@ bool g_chineseEnabled = false;
 bool g_hasPendingApply = false;
 bool g_pendingEnable = false;
 bool g_waitingForDeferredCall = false;
+bool g_autoEnableChinese = false;
 uint32_t g_originalLanguage = 0;
 uint32_t* g_originalLanguagePtr = nullptr;
+
+#if LANG5_ENABLE_UNSAFE_LANGUAGE_CALL
+bool g_autoApplyScheduled = false;
+int g_autoApplyDelayFrames = 0;
+#endif
 
 using LanguageSetterFn = void(__fastcall*)(uint32_t languageId);
 LanguageSetterFn g_languageSetter = nullptr;
@@ -75,6 +90,72 @@ void Alert(const char* message) {
     if (g_api && g_api->GUI_SendAlert) {
         g_api->GUI_SendAlert(message);
     }
+}
+
+void BuildSettingsPath(char* out, size_t outSize) {
+    if (out && outSize > 0) {
+        out[0] = '\0';
+    }
+
+    if (!out || outSize == 0 || !g_api || !g_api->Paths_GetAddonDirectory) {
+        return;
+    }
+
+    const char* dir = g_api->Paths_GetAddonDirectory(kAddonDirName);
+    if (!dir) {
+        return;
+    }
+
+    CreateDirectoryA(dir, nullptr);
+    std::snprintf(out, outSize, "%s\\%s", dir, kSettingsFileName);
+}
+
+void LoadSettings() {
+    char path[MAX_PATH]{};
+    BuildSettingsPath(path, sizeof(path));
+    if (path[0] == '\0') {
+        return;
+    }
+
+    FILE* file = std::fopen(path, "rb");
+    if (!file) {
+        return;
+    }
+
+    char line[128]{};
+    while (std::fgets(line, sizeof(line), file)) {
+        char* separator = std::strchr(line, '=');
+        if (!separator) {
+            continue;
+        }
+
+        *separator = '\0';
+        const char* key = line;
+        const char* value = separator + 1;
+        if (std::strcmp(key, kAutoEnableKey) == 0) {
+            g_autoEnableChinese = std::atoi(value) != 0;
+        }
+    }
+
+    std::fclose(file);
+}
+
+void SaveSettings() {
+    char path[MAX_PATH]{};
+    BuildSettingsPath(path, sizeof(path));
+    if (path[0] == '\0') {
+        Log(LOGL_WARNING, "Could not resolve settings path; preference not saved.");
+        return;
+    }
+
+    FILE* file = std::fopen(path, "wb");
+    if (!file) {
+        Log(LOGL_WARNING, "Could not open settings file for writing.");
+        return;
+    }
+
+    std::fprintf(file, "%s=%d\n", kAutoEnableKey, g_autoEnableChinese ? 1 : 0);
+    std::fclose(file);
 }
 
 void LogAddress(ELogLevel level, const char* label, const void* ptr) {
@@ -831,6 +912,18 @@ void OnPostRender() {
     CheckDeferredCallCompletion();
 #endif
 
+    // Auto-enable Chinese shortly after launch when the preference is set.
+    if (g_autoApplyScheduled && !g_chineseEnabled && !g_hasPendingApply) {
+        if (g_autoApplyDelayFrames > 0) {
+            --g_autoApplyDelayFrames;
+        } else {
+            g_autoApplyScheduled = false;
+            g_pendingEnable = true;
+            g_hasPendingApply = true;
+            Log(LOGL_INFO, "Auto-enabling Chinese UI now.");
+        }
+    }
+
     if (!g_hasPendingApply) {
         return;
     }
@@ -840,6 +933,21 @@ void OnPostRender() {
     ApplyChinese(enable);
 }
 #endif
+
+void OnOptionsRender() {
+    if (ImGui::Checkbox("Auto-enable Chinese UI on launch", &g_autoEnableChinese)) {
+        SaveSettings();
+        Alert(g_autoEnableChinese
+            ? "Lang5 Nexus CN: auto-enable Chinese on launch is ON."
+            : "Lang5 Nexus CN: auto-enable Chinese on launch is OFF.");
+    }
+
+    ImGui::TextDisabled("Takes effect on the next game launch.");
+    ImGui::TextDisabled("ALT+SHIFT+C toggles the Chinese UI right now.");
+#if !LANG5_ENABLE_UNSAFE_LANGUAGE_CALL
+    ImGui::TextDisabled("Diagnostic build: preference is saved but no switching happens.");
+#endif
+}
 
 void OnToggleKeybind(const char* identifier, bool isRelease) {
     if (isRelease || std::strcmp(identifier, kToggleKeybind) != 0) {
@@ -874,6 +982,20 @@ void AddonLoad(AddonAPI_t* api) {
         g_api->InputBinds_RegisterWithString(kToggleKeybind, OnToggleKeybind, "ALT+SHIFT+C");
     }
 
+    LoadSettings();
+
+    // Adopt the Nexus-owned ImGui context so the options-panel checkbox renders
+    // into the same ImGui instance instead of creating a private one.
+    if (g_api->ImguiContext) {
+        ImGui::SetCurrentContext(static_cast<ImGuiContext*>(g_api->ImguiContext));
+        ImGui::SetAllocatorFunctions(
+            reinterpret_cast<void* (*)(size_t, void*)>(g_api->ImguiMalloc),
+            reinterpret_cast<void (*)(void*, void*)>(g_api->ImguiFree));
+        if (g_api->GUI_Register) {
+            g_api->GUI_Register(RT_OptionsRender, OnOptionsRender);
+        }
+    }
+
     g_loaded = ResolveLanguageSetter();
     if (!g_loaded) {
         Alert("Lang5 Nexus CN: address scan failed.");
@@ -885,9 +1007,19 @@ void AddonLoad(AddonAPI_t* api) {
     if (g_api->GUI_Register) {
         g_api->GUI_Register(RT_PostRender, OnPostRender);
     }
-    Alert("Lang5 Nexus CN: ready. Press ALT+SHIFT+C to queue Chinese UI toggle.");
+
+    if (g_autoEnableChinese) {
+        g_autoApplyScheduled = true;
+        g_autoApplyDelayFrames = kAutoApplyDelayFrames;
+        Log(LOGL_INFO, "Auto-enable Chinese preference is on; scheduling launch toggle.");
+        Alert("Lang5 Nexus CN: ready. Auto-enabling Chinese UI shortly.");
+    } else {
+        Alert("Lang5 Nexus CN: ready. ALT+SHIFT+C toggles Chinese; see addon options for auto-start.");
+    }
 #else
-    Alert("Lang5 Nexus CN: diagnostic build ready. Unsafe toggle disabled.");
+    Alert(g_autoEnableChinese
+        ? "Lang5 Nexus CN: diagnostic build. Auto-start preference is ON (takes effect in experimental build)."
+        : "Lang5 Nexus CN: diagnostic build ready. Unsafe toggle disabled.");
 #endif
 }
 
@@ -896,6 +1028,10 @@ void AddonUnload() {
 
     if (g_api && g_api->InputBinds_Deregister) {
         g_api->InputBinds_Deregister(kToggleKeybind);
+    }
+
+    if (g_api && g_api->GUI_Deregister) {
+        g_api->GUI_Deregister(OnOptionsRender);
     }
 
 #if LANG5_ENABLE_UNSAFE_LANGUAGE_CALL
@@ -925,6 +1061,10 @@ void AddonUnload() {
     g_hasPendingApply = false;
     g_pendingEnable = false;
     g_waitingForDeferredCall = false;
+#if LANG5_ENABLE_UNSAFE_LANGUAGE_CALL
+    g_autoApplyScheduled = false;
+    g_autoApplyDelayFrames = 0;
+#endif
     g_originalLanguage = 0;
     g_originalLanguagePtr = nullptr;
     g_languageSetter = nullptr;
@@ -939,9 +1079,9 @@ extern "C" __declspec(dllexport) AddonDefinition_t* GetAddonDef() {
     g_addonDef.Signature = 0x4C35434E; // "L5CN"; use a unique positive id if accepted by Raidcore.
     g_addonDef.APIVersion = NEXUS_API_VERSION;
     g_addonDef.Name = "Lang5 Nexus CN";
-    g_addonDef.Version = AddonVersion_t{0, 1, 0, 0};
+    g_addonDef.Version = AddonVersion_t{0, 2, 0, 0};
     g_addonDef.Author = "Local prototype based on cy-sp-howard/lang5";
-    g_addonDef.Description = "Experimental simplified Chinese UI selector. Memory access.";
+    g_addonDef.Description = "Experimental simplified Chinese UI selector with optional auto-enable on launch. Memory access.";
     g_addonDef.Load = AddonLoad;
     g_addonDef.Unload = AddonUnload;
     g_addonDef.Flags = static_cast<EAddonFlags>(AF_IsVolatile | AF_LaunchOnly);

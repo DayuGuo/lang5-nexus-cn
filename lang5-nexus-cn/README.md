@@ -9,7 +9,10 @@ The goal is to investigate whether Lang5's simplified Chinese Guild Wars 2 UI se
 Implemented:
 
 - Nexus native addon DLL
-- keybind registration
+- toggle keybind registration
+- ImGui options-panel checkbox for the auto-start preference
+- persisted settings file (`settings.txt`)
+- optional auto-enable Chinese on launch
 - GW2 main-module memory scan
 - `ValidateLanguage(language)` anchor discovery
 - language setter target discovery
@@ -32,6 +35,41 @@ This is a memory-access addon. It scans and patches the GW2 process. Use only fo
 This project is not approved by ArenaNet, Raidcore, Nexus, Blish HUD, or the original Lang5 author. It may crash after any GW2 update.
 
 The addon is marked volatile and launch-only. If Nexus disables volatile addons after a game update, leave it disabled until offsets are revalidated.
+
+## Keybinds And Settings
+
+One keybind is registered (default, rebindable in Nexus):
+
+```text
+ALT+SHIFT+C   Toggle Chinese UI (queued; only mutates in the experimental build)
+```
+
+The "auto-enable Chinese on launch" preference is exposed as a checkbox in the addon's
+Nexus options panel (open Nexus, go to the addon's options). Toggling it saves to:
+
+```text
+<GW2>/addons/Lang5NexusCn/settings.txt
+```
+
+Format is a single line:
+
+```text
+auto_enable_chinese=1
+```
+
+When the preference is on and the experimental (unsafe) build is loaded, the addon
+waits a short delay after load, then queues the Chinese toggle through the deferred
+caller hook automatically. In the diagnostic build the preference is still saved, but
+no mutation happens — it takes effect once you load the experimental build.
+
+### ImGui options panel
+
+The checkbox is drawn with Dear ImGui **1.80**, vendored verbatim from the Nexus
+source tree (`thirdparty/imgui/`) so the struct layouts match the Nexus-hosted ImGui
+context exactly. The addon adopts the context via `ImGui::SetCurrentContext` and
+`ImGui::SetAllocatorFunctions` in its load function. If a future Nexus release changes
+its bundled ImGui version, re-vendor the matching sources from
+`RaidcoreGG/Nexus/thirdparty/imgui` before rebuilding.
 
 ## Build Modes
 

@@ -11,6 +11,24 @@ if(NOT WIN32)
     message(FATAL_ERROR "Lang5NexusCn must be built for Windows x64.")
 endif()
 
+# Dear ImGui 1.80, vendored verbatim from the Nexus source tree so the struct
+# layouts match the Nexus-hosted ImGui context exactly (required for ABI safety).
+# Built as a separate library so its third-party warnings do not pollute our target.
+add_library(imgui STATIC
+    thirdparty/imgui/imgui.cpp
+    thirdparty/imgui/imgui_draw.cpp
+    thirdparty/imgui/imgui_widgets.cpp
+    thirdparty/imgui/imgui_tables.cpp
+)
+target_include_directories(imgui PUBLIC thirdparty/imgui)
+target_compile_features(imgui PRIVATE cxx_std_17)
+target_link_libraries(imgui PUBLIC imm32 gdi32 user32 dwmapi)
+if(MSVC)
+    target_compile_options(imgui PRIVATE /w)
+else()
+    target_compile_options(imgui PRIVATE -w)
+endif()
+
 add_library(Lang5NexusCn SHARED
     src/ModuleMain.cpp
 )
@@ -54,7 +72,7 @@ else()
     target_link_options(Lang5NexusCn PRIVATE -static -static-libgcc -static-libstdc++)
 endif()
 
-target_link_libraries(Lang5NexusCn PRIVATE psapi)
+target_link_libraries(Lang5NexusCn PRIVATE psapi imgui)
 
 set_target_properties(Lang5NexusCn PROPERTIES
     PREFIX ""
