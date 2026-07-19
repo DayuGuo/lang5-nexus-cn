@@ -1,0 +1,4 @@
+/Users/zhaoyuguo/Documents/Github/lang5-nexus-cn/build-mingw-player/CMakeFiles/imgui.dir
+/Users/zhaoyuguo/Documents/Github/lang5-nexus-cn/build-mingw-player/CMakeFiles/Lang5NexusCn.dir
+/Users/zhaoyuguo/Documents/Github/lang5-nexus-cn/build-mingw-player/CMakeFiles/edit_cache.dir
+/Users/zhaoyuguo/Documents/Github/lang5-nexus-cn/build-mingw-player/CMakeFiles/rebuild_cache.dir

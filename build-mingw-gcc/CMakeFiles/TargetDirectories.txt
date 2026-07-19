@@ -1,0 +1,4 @@
+/Users/zhaoyuguo/Downloads/lang5-nexus-cn-main/lang5-nexus-cn/build-mingw-gcc/CMakeFiles/imgui.dir
+/Users/zhaoyuguo/Downloads/lang5-nexus-cn-main/lang5-nexus-cn/build-mingw-gcc/CMakeFiles/Lang5NexusCn.dir
+/Users/zhaoyuguo/Downloads/lang5-nexus-cn-main/lang5-nexus-cn/build-mingw-gcc/CMakeFiles/edit_cache.dir
+/Users/zhaoyuguo/Downloads/lang5-nexus-cn-main/lang5-nexus-cn/build-mingw-gcc/CMakeFiles/rebuild_cache.dir

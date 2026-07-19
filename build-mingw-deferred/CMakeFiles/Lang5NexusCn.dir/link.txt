@@ -1,0 +1,3 @@
+/opt/homebrew/bin/cmake -E rm -f CMakeFiles/Lang5NexusCn.dir/objects.a
+x86_64-w64-mingw32-ar qc CMakeFiles/Lang5NexusCn.dir/objects.a @CMakeFiles/Lang5NexusCn.dir/objects1.rsp
+/opt/homebrew/bin/x86_64-w64-mingw32-g++ -shared -static -static-libgcc -static-libstdc++ -o bin/Lang5NexusCn.dll -Wl,--out-implib,libLang5NexusCn.dll.a -Wl,--major-image-version,0,--minor-image-version,0 -Wl,--whole-archive CMakeFiles/Lang5NexusCn.dir/objects.a -Wl,--no-whole-archive @CMakeFiles/Lang5NexusCn.dir/linkLibs.rsp
