@@ -26,7 +26,7 @@ Implemented:
 Not implemented:
 
 - Blish HUD module compatibility
-- stable release packaging
+- automated release packaging / CI
 - in-game editing / reload of the conversion dictionary
 
 ## How The Traditional Conversion Works

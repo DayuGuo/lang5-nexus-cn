@@ -1350,13 +1350,13 @@ extern "C" __declspec(dllexport) AddonDefinition_t* GetAddonDef() {
     g_addonDef.Signature = 0x4C35434E; // "L5CN"; use a unique positive id if accepted by Raidcore.
     g_addonDef.APIVersion = NEXUS_API_VERSION;
     g_addonDef.Name = "Lang5 Nexus CN";
-    g_addonDef.Version = AddonVersion_t{0, 3, 0, 0};
-    g_addonDef.Author = "Local prototype based on cy-sp-howard/lang5";
+    g_addonDef.Version = AddonVersion_t{0, 3, 1, 0};
+    g_addonDef.Author = "DayuGuo";
     g_addonDef.Description = "Experimental simplified Chinese UI selector with optional traditional-Chinese conversion and auto-enable on launch. Memory access.";
     g_addonDef.Load = AddonLoad;
     g_addonDef.Unload = AddonUnload;
     g_addonDef.Flags = static_cast<EAddonFlags>(AF_IsVolatile | AF_LaunchOnly);
-    g_addonDef.Provider = UP_None;
-    g_addonDef.UpdateLink = "";
+    g_addonDef.Provider = UP_GitHub;
+    g_addonDef.UpdateLink = "https://github.com/DayuGuo/lang5-nexus-cn";
     return &g_addonDef;
 }

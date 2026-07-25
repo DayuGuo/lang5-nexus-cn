@@ -1,4 +1,6 @@
-> 老版本也支持2026年7月的更新，新版本增加了开启游戏自动启动插件和繁体支持。
+> 当前发布版本：**v0.3.1**。已适配并测试 2026 年 7 月的游戏版本；后续大型游戏更新仍可能需要重新适配。
+>
+> Current release: **v0.3.1**. Tested against the July 2026 game build; future major game updates may still require compatibility updates.
 
 # Lang5 Nexus CN —《激战2》简体 / 繁体中文界面
 
@@ -11,11 +13,27 @@ A [Nexus](https://raidcore.gg/Nexus) addon that enables the **Simplified Chinese
 
 ---
 
+## 截图 Screenshots
+
+### 游戏内中文界面 Chinese UI In Game
+
+![Guild Wars 2 running with the Simplified Chinese interface](docs/images/chinese-ui.jpg)
+
+### Nexus 插件设置 Nexus Addon Options
+
+![Lang5 Nexus CN options displayed in Nexus](docs/images/nexus-options.jpg)
+
+---
+
 ## ⚠️ 请先读这里 Please Read This First
 
 * 这是一个**非官方、实验性**工具，会**读取和修改游戏内存**。
 
 * This is an **unofficial, experimental** tool that **reads and modifies game memory**. 
+
+* 插件不会自动操作游戏、影响战斗结果或向玩家提供竞争优势。
+
+* The addon does not automate gameplay, affect combat outcomes, or provide a competitive advantage.
 
 * 游戏每次大版本更新后，插件都可能**失效甚至导致游戏崩溃**。游戏更新后建议先停用插件，等待适配版本。
 
@@ -24,6 +42,14 @@ A [Nexus](https://raidcore.gg/Nexus) addon that enables the **Simplified Chinese
 * 如果游戏闪退或异常，**第一步应删除或停用本插件**：关闭游戏，从 `addons` 文件夹中删除 `Lang5NexusCn.dll`，再重新启动。
 
 * If the game crashes or misbehaves, **remove this addon first**: close the game, delete `Lang5NexusCn.dll` from the `addons` folder, and restart.
+
+---
+
+## 平台支持 Platform Support
+
+插件是 **Windows x64 DLL**。Windows 可以直接运行；macOS 与 Linux 需要通过 CrossOver、Wine 或其他 Windows 兼容层运行《激战2》，并不提供原生 macOS/Linux 构建。
+
+The addon is a **Windows x64 DLL**. It runs directly on Windows; macOS and Linux require Guild Wars 2 to run through CrossOver, Wine, or another Windows compatibility layer. Native macOS/Linux builds are not provided.
 
 ---
 
@@ -95,6 +121,10 @@ Open Nexus → **Lang5 Nexus CN** → **Options** → check `Enable Traditional 
 
 * 基于 [cy-sp-howard/lang5](https://github.com/cy-sp-howard/lang5) 的实验性 Nexus 移植。
 * 内置简繁字典来自 [kfcd/fanjian](https://github.com/kfcd/fanjian)，采用 **CC BY 3.0** 授权。
+* 开发过程中使用了 AI 辅助编程与文档工具；发布内容由维护者审查，合规与维护责任由维护者承担。
+* 完整的第三方组件与许可说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 * An experimental Nexus port based on [cy-sp-howard/lang5](https://github.com/cy-sp-howard/lang5).
 * The built-in dictionary is derived from [kfcd/fanjian](https://github.com/kfcd/fanjian), licensed under **CC BY 3.0**.
+* AI-assisted coding and documentation tools were used during development. The maintainer reviews released material and remains responsible for compliance and maintenance.
+* See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for complete third-party component and licensing notices.
