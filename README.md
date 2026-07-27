@@ -1,6 +1,6 @@
-> 当前发布版本：**v0.3.1**。已适配并测试 2026 年 7 月的游戏版本；后续大型游戏更新仍可能需要重新适配。
+> 根据 ArenaNet 要求，这类插件必须采用闭源的方式发布。本插件已经构建了一个私有github库，供raidcore审核。
 >
-> Current release: **v0.3.1**. Tested against the July 2026 game build; future major game updates may still require compatibility updates.
+> Due to ArenaNet requirements, this addon must be closed source. A private GitHub repository has been created for Raidcore review.
 
 # Lang5 Nexus CN —《激战2》简体 / 繁体中文界面
 
