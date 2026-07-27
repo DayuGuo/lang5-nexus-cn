@@ -1,2 +1,0 @@
-# Hashes of file build rules.
-244bb38e2202635915e65e1ca1ed9c3a generated/jianfan_embedded.h
