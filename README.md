@@ -8,6 +8,10 @@
 
 A [Nexus](https://raidcore.gg/Nexus) addon that enables the **Simplified Chinese** interface in Guild Wars 2 and can convert the UI text to **Traditional Chinese** in real time.
 
+该插件侵入性低，只调用游戏已有语言切换逻辑，游戏更新后更不容易崩溃、也更少需要维护和更新。
+
+Low-intrusion: it only calls the game’s existing language-switching logic, making it less likely to crash after game updates and requiring less maintenance.
+
 > 灵感与技术来自 [cy-sp-howard/lang5](https://github.com/cy-sp-howard/lang5)。
 > Inspired by and based on techniques from [cy-sp-howard/lang5](https://github.com/cy-sp-howard/lang5).
 
