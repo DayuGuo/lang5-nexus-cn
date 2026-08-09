@@ -4,7 +4,7 @@
 
 # Lang5 Nexus CN —《激战2》简体 / 繁体中文界面
 
-一个 [Nexus](https://raidcore.gg/Nexus) 插件，让《激战2》显示**简体中文**界面，并可一键将界面文字实时转换为**繁体中文**。
+一个 [Nexus](https://raidcore.gg/Nexus) 插件，让《激战2》显示**简体中文**界面，并可一键将界面文字实时转换为**繁体中文**。目前已支持成就检索，黑狮交易所中文名快捷键自动翻译为英文。大部分优化是为了兼容macOS和linux，欢迎大家帮忙测试。
 
 A [Nexus](https://raidcore.gg/Nexus) addon that enables the **Simplified Chinese** interface in Guild Wars 2 and can convert the UI text to **Traditional Chinese** in real time.
 
