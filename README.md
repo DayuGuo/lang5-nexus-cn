@@ -1,4 +1,4 @@
-> 新版本 2026 8月四风节可用。
+> 新版本 2026 8月四风节可用。   
 > 根据 ArenaNet 要求，这类插件必须采用闭源的方式发布。本插件已经构建了一个私有github库，供raidcore审核。
 >
 > Due to ArenaNet requirements, this addon must be closed source. A private GitHub repository has been created for Raidcore review.
